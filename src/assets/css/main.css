@@ -1,0 +1,52 @@
+.replace-file-path,
+.i18n-json-path,
+.translate-fn-name,
+.allow-file-ext {
+  margin-top: 12px;
+}
+
+.replace-file-path h4,
+.i18n-json-path h4,
+.translate-fn-name h4,
+.allow-file-ext h4 {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgb(150, 154, 164);
+}
+
+.replace-file-path-input,
+.i18n-json-path-input,
+.translate-fn-name-input,
+.allow-file-ext-input {
+  margin-top: 2px;
+}
+
+.replace-file-path-btn,
+.i18n-json-path-btn {
+  margin-bottom: 4px;
+}
+
+.checkbox-wrapper {
+  margin-top: 16px;
+}
+
+.ignore-text-case {
+  margin-bottom: 4px;
+}
+
+.ignore-text-case label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgb(150, 154, 164);
+}
+
+.ignore-text-case-checkbox {
+  cursor: pointer;
+}
+
+.replace-btn {
+  margin-top: 16px;
+}

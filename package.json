@@ -1,0 +1,139 @@
+{
+  "name": "replace-i18n",
+  "displayName": "replace-i18n",
+  "description": "替换国际化文案",
+  "publisher": "leroy-magpie",
+  "author": {
+    "name": "leroy-magpie",
+    "email": "954506993@qq.com"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "src/assets/image/logo.png",
+  "version": "0.0.9",
+  "engines": {
+    "vscode": "^1.65.0"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leroy-magpie/vscode-replace-i18n.git"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact",
+    "onView:replace-i18n.webview",
+    "onView:replace-i18n.noneKey",
+    "onView:replace-i18n.multipleKey",
+    "onCommand:replace-i18n.refresh",
+    "onCommand:replace-i18n.useKey",
+    "onCommand:replace-i18n.useBracketsKey"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "replace-i18n",
+          "title": "replace i18n",
+          "icon": "src/assets/icons/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "replace-i18n": [
+        {
+          "id": "replace-i18n.webview",
+          "name": "replace i18n",
+          "type": "webview",
+          "icon": "src/assets/icons/logo.svg",
+          "contextualTitle": "Replace I18n"
+        },
+        {
+          "id": "replace-i18n.multipleKey",
+          "name": "有多个对应的 key",
+          "when": "replace-i18n.multipleKey.numberOfNodes > 0"
+        },
+        {
+          "id": "replace-i18n.noneKey",
+          "name": "不存在对应的 key",
+          "when": "replace-i18n.noneKey.numberOfNodes > 0"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "when": "view == replace-i18n.webview",
+          "group": "navigation",
+          "command": "replace-i18n.refresh"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "replace-i18n.useKey",
+          "group": "group1@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "replace-i18n.useBracketsKey",
+          "group": "group1@2",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "replace-i18n.refresh",
+        "title": "refresh",
+        "category": "Replace I18n",
+        "icon": {
+          "light": "src/assets/icons/refresh.svg",
+          "dark": "src/assets/icons/refresh.svg"
+        }
+      },
+      {
+        "command": "replace-i18n.openFile",
+        "title": "open file"
+      },
+      {
+        "command": "replace-i18n.useKey",
+        "title": "替换为 t('key')"
+      },
+      {
+        "command": "replace-i18n.useBracketsKey",
+        "title": "替换为 {t('key')}"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.4",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.65.0",
+    "@typescript-eslint/eslint-plugin": "^5.1.0",
+    "@typescript-eslint/parser": "^5.1.0",
+    "@vscode/test-electron": "^1.6.2",
+    "eslint": "^8.1.0",
+    "glob": "^7.1.7",
+    "mocha": "^9.1.3",
+    "ts-loader": "^9.2.5",
+    "typescript": "^4.4.4",
+    "webpack": "^5.52.1",
+    "webpack-cli": "^4.8.0"
+  }
+}
