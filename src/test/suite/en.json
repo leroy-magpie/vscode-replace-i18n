@@ -1,0 +1,11 @@
+{
+  "menu_ochaMenuList_dialog_text_editPageInfo": "Edit Page Info",
+  "menu_ochaMenuList_dialog_text_pageName": "Page Name",
+  "menu_ochaMenuList_dialog_hint_pleaseEnter": "Please Enter",
+  "menu_ochaMenuList_dialog_text_chooseIcon": "Choose Icon",
+  "menu_ochaMenuList_simpleDialog_text_sorry": "Sorry",
+  "menu_ochaMenuList_simpleDialog_text_noSpace": "There is no space for more dishes.",
+  "general_btn_save_1": "Save",
+  "general_btn_save_2": "Save",
+  "general_btn_delete": "Delete"
+}
