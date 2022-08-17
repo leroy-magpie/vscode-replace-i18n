@@ -64,10 +64,7 @@ class I18nKeyDefinition implements vscode.DefinitionProvider {
       }
     });
 
-    return new vscode.Location(
-      i18nUri,
-      new vscode.Position(lineNum, 3),
-    );
+    return new vscode.Location(i18nUri, new vscode.Position(lineNum, 3));
   };
 }
 

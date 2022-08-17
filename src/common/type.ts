@@ -33,7 +33,7 @@ export interface IReplaceParam {
 }
 
 export interface IDisposableContext {
-  context: vscode.ExtensionContext
+  context: vscode.ExtensionContext;
   viewProvider: ReplaceI18nViewProvider;
   multipleKeyView: TreeView;
   noneKeyView: TreeView;

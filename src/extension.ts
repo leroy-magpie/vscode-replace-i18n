@@ -19,9 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
   viewProvider.onDidChange.event((data) => {
     console.log('aaadata', data);
 
-    const { targetUri, multipleKeyValue, noneKeyValue } = data;
-    multipleKeyView.render(targetUri, multipleKeyValue);
-    noneKeyView.render(targetUri, noneKeyValue);
+    const { targetUri, multipleKeyValues, noneKeyValues } = data;
+    multipleKeyView.render(targetUri, multipleKeyValues);
+    noneKeyView.render(targetUri, noneKeyValues);
   });
 
   context.subscriptions.push(

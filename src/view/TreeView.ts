@@ -22,7 +22,11 @@ export class TreeView {
   }
 
   public render(targetUri: vscode.Uri | undefined, nodes: IValueNode[]) {
-    vscode.commands.executeCommand('setContext', `${this.viewType}.numberOfNodes`, nodes.length);
+    vscode.commands.executeCommand(
+      'setContext',
+      `${this.viewType}.numberOfNodes`,
+      nodes.length,
+    );
     this.treeDataProvider.render(targetUri, nodes);
   }
 

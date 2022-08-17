@@ -16,96 +16,48 @@ import { forEachFile, getExt } from '../../common/utils';
 
 const { fs } = vscode.workspace;
 
+interface ReplaceValueCoreParam {
+  i18nMap: IStringMap;
+  isIgnoreCase: boolean;
+  translateFnName?: string;
+  allowFileExt?: string;
+}
+
 class ReplaceValueCore {
   private translateFnName?: string;
 
-  public async replaceValueInTargetPath(param: {
-    targetUri: vscode.Uri;
-    i18nMap: IStringMap;
-    isIgnoreCase: boolean;
-    translateFnName?: string;
-    allowFileExt?: string;
-  }) {
-    const {
-      targetUri,
-      isIgnoreCase,
-      translateFnName,
-      allowFileExt = '',
-    } = param;
-    let { i18nMap } = param;
+  private singleKeyI18nMap: Record<string, string | symbol> = {};
+
+  private allowFileExts: string[] = [];
+
+  constructor(private param: ReplaceValueCoreParam) {
+    const { i18nMap, isIgnoreCase, translateFnName, allowFileExt = '' } = param;
+
+    this.singleKeyI18nMap = this.getSingleKeyI18nMap(i18nMap, isIgnoreCase);
 
     this.translateFnName = translateFnName;
 
-    const noneKeyValue: IValueNode[] = [];
-    const multipleKeyValue: IValueNode[] = [];
+    this.allowFileExts = allowFileExt.split(',');
+  }
 
-    const singleKeyI18nMap = this.getSingleKeyI18nMap(i18nMap, isIgnoreCase);
-    const replaceValueFnList = [
-      this.replaceValueInJsx,
-      this.replaceValueInStr,
-      this.replaceValueInProps,
-    ];
-    const allowFileExts = allowFileExt.split(',');
+  public async replaceValue(targetUri: vscode.Uri) {
+    const multipleKeyValues: IValueNode[] = [];
+    const noneKeyValues: IValueNode[] = [];
 
     await forEachFile(targetUri, async (fileUri: vscode.Uri) => {
       const ext = getExt(fileUri.path);
-      if (allowFileExts.length && !allowFileExts.includes(ext)) {
+      if (!this.allowFileExts.includes(ext)) {
         return;
       }
 
-      const fileContent = await fs.readFile(fileUri);
+      const fileBuffer = await fs.readFile(fileUri);
+      const fileContent = fileBuffer.toString();
 
-      let newFileContent = fileContent.toString();
-      Object.entries(singleKeyI18nMap).forEach(([key, value]) => {
-        // 多个 key 的 value
-        if (value === MULTIPLE) {
-          const res = this.logValueWhenMultipleKey(
-            fileUri,
-            newFileContent,
-            key,
-            i18nMap,
-            isIgnoreCase,
-          );
-          if (res.length) {
-            multipleKeyValue.push(...res);
-          }
-          return;
-        }
+      const newFileContent = this.replaceValueFromContent(fileContent);
 
-        value = isIgnoreCase
-          ? (value as string).toLocaleLowerCase()
-          : (value as string);
-
-        const isContainsValue = isIgnoreCase
-          ? newFileContent.toLocaleLowerCase().includes(value)
-          : newFileContent.includes(value);
-
-        // 文件不存在 value 或者 value 是空格
-        if (!isContainsValue || !value.trim()) {
-          return;
-        }
-
-        // 替换 value 为 key
-        const formateValue = this.formatValue(value);
-        replaceValueFnList.forEach((fn) => {
-          newFileContent = fn({
-            content: newFileContent,
-            key,
-            value: formateValue,
-            isIgnoreCase,
-          });
-        });
-      });
-
-      const res = this.logValueWhenNoneKey(
-        fileUri,
-        newFileContent,
-        i18nMap,
-        isIgnoreCase,
-      );
-      if (res.length) {
-        noneKeyValue.push(...res);
-      }
+      const log = this.logValue(fileUri, newFileContent);
+      multipleKeyValues.push(...log.multipleKeyValues);
+      noneKeyValues.push(...log.noneKeyValues);
 
       if (fileContent.toString() !== newFileContent) {
         await fs.writeFile(fileUri, Buffer.from(newFileContent));
@@ -114,9 +66,43 @@ class ReplaceValueCore {
 
     return {
       targetUri,
-      multipleKeyValue,
-      noneKeyValue,
+      multipleKeyValues,
+      noneKeyValues,
     };
+  }
+
+  public replaceValueFromContent(fileContent: string) {
+    const { isIgnoreCase } = this.param;
+    let newFileContent = fileContent;
+
+    Object.entries(this.singleKeyI18nMap).forEach(([key, value]) => {
+      if (value === MULTIPLE) {
+        return;
+      }
+
+      value = value as string;
+
+      const isContainsValue = isIgnoreCase
+        ? newFileContent.toLocaleLowerCase().includes(value.toLocaleLowerCase())
+        : newFileContent.includes(value);
+
+      // 文件不存在 value
+      if (!isContainsValue) {
+        return;
+      }
+
+      const formateValue = this.formatValue(value);
+      this.replaceValueFnList.forEach((fn) => {
+        newFileContent = fn({
+          content: newFileContent,
+          key,
+          value: formateValue,
+          isIgnoreCase,
+        });
+      });
+    });
+
+    return newFileContent;
   }
 
   // ============================ log =================================
@@ -158,10 +144,13 @@ class ReplaceValueCore {
 
         if (jsxRegFlag || singleQuoteRegFlag || propsQuoteRegFlag) {
           const lineIndex = index;
-          const matchValue = singleQuoteRegFlag
-            ? `'${originValue}'`
-            : originValue;
-          if (matchValue === '') {
+
+          let matchValue = originValue;
+          if (singleQuoteRegFlag) {
+            matchValue = `'${originValue}'`;
+          } else if (propsQuoteRegFlag) {
+            matchValue = `"${originValue}"`;
+          } else if (matchValue === '') {
             return;
           }
 
@@ -173,7 +162,10 @@ class ReplaceValueCore {
           const endIndex = charIndex + matchValue.length;
 
           let codeValue = line.slice(charIndex, endIndex);
-          codeValue = singleQuoteRegFlag ? codeValue.slice(1, -1) : codeValue;
+          codeValue =
+            singleQuoteRegFlag || propsQuoteRegFlag
+              ? codeValue.slice(1, -1)
+              : codeValue;
 
           res.push({
             key: codePath,
@@ -305,6 +297,45 @@ class ReplaceValueCore {
     });
 
     return res;
+  }
+
+  private logValue(fileUri: vscode.Uri, fileContent: string) {
+    const { i18nMap, isIgnoreCase } = this.param;
+
+    const multipleKeyValues: IValueNode[] = [];
+    const noneKeyValues: IValueNode[] = [];
+
+    Object.entries(this.singleKeyI18nMap).forEach(([key, value]) => {
+      if (value !== MULTIPLE) {
+        return;
+      }
+
+      const res = this.logValueWhenMultipleKey(
+        fileUri,
+        fileContent,
+        key,
+        i18nMap,
+        isIgnoreCase,
+      );
+      if (res.length) {
+        multipleKeyValues.push(...res);
+      }
+    });
+
+    const res = this.logValueWhenNoneKey(
+      fileUri,
+      fileContent,
+      i18nMap,
+      isIgnoreCase,
+    );
+    if (res.length) {
+      noneKeyValues.push(...res);
+    }
+
+    return {
+      multipleKeyValues,
+      noneKeyValues,
+    };
   }
 
   // ============================ utils =================================
@@ -449,10 +480,7 @@ class ReplaceValueCore {
   };
 
   private getInPropsReg(value: string, isIgnoreCase: boolean) {
-    return new RegExp(
-      `(="${value}")|(={'${value}'})`,
-      isIgnoreCase ? 'gi' : 'g',
-    );
+    return new RegExp(`="${value}"`, isIgnoreCase ? 'gi' : 'g');
   }
 
   private replaceValueInProps = ({
@@ -471,6 +499,12 @@ class ReplaceValueCore {
 
     return content;
   };
+
+  private replaceValueFnList = [
+    this.replaceValueInJsx,
+    this.replaceValueInStr,
+    this.replaceValueInProps,
+  ];
 }
 
-export default new ReplaceValueCore();
+export default ReplaceValueCore;

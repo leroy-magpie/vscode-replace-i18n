@@ -3,7 +3,7 @@ import * as path from 'path';
 import { IWorkspaceSetting, IStringMap } from './type';
 import { WORKSPACE_SETTING_NAME, DEFAULT_WORKSPACE_SETTING } from './const';
 
-const fs = vscode.workspace.fs;
+const { fs } = vscode.workspace;
 
 export async function forEachFile(
   targetUri: vscode.Uri,

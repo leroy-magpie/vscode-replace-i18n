@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { getI18nMap, getRootUri, selectFile } from '../common/utils';
-import replaceValueCore from '../assets/js/core';
+import ReplaceValueCore from '../assets/js/core';
 import { IValueNode } from '../common/type';
 import { WORKSPACE_SETTING_NAME } from '../common/const';
 
@@ -17,8 +17,8 @@ interface IState {
 
 interface IData {
   targetUri: vscode.Uri;
-  multipleKeyValue: IValueNode[];
-  noneKeyValue: IValueNode[];
+  multipleKeyValues: IValueNode[];
+  noneKeyValues: IValueNode[];
 }
 
 export class ReplaceI18nViewProvider implements vscode.WebviewViewProvider {
@@ -131,13 +131,14 @@ export class ReplaceI18nViewProvider implements vscode.WebviewViewProvider {
               replaceFilePath,
             );
             const i18nMap = await getI18nMap(i18nJsonPath);
-            const res = await replaceValueCore.replaceValueInTargetPath({
-              targetUri: replaceFileAbsPath,
+            const replaceValueCore = new ReplaceValueCore({
               i18nMap,
               translateFnName,
               isIgnoreCase,
               allowFileExt,
             });
+
+            const res = await replaceValueCore.replaceValue(replaceFileAbsPath);
             this.onDidChange.fire(res);
           } catch (error) {
             vscode.window.showErrorMessage(`${error}`);
